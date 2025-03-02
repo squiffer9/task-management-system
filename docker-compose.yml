@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: task-management-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    command: --wiredTigerCacheSizeGB 1.5
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongodb://admin:password@localhost:27017/admin --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:

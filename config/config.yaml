@@ -1,0 +1,21 @@
+app:
+  name: "task-management-system"
+  version: "0.1.0"
+  env: "development"
+
+server:
+  http:
+    port: 8080
+  grpc:
+    port: 50051
+
+database:
+  mongodb:
+    uri: "mongodb://localhost:27017"
+    name: "task_management"
+    timeout: 10 # seconds
+
+auth:
+  jwt:
+    secret: "your-secret-key"
+    expiry: 24 # hours
