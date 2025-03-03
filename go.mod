@@ -4,6 +4,7 @@ go 1.23.5
 
 require (
 	github.com/golang-jwt/jwt/v4 v4.5.1
+	github.com/gorilla/mux v1.8.1
 	github.com/spf13/viper v1.19.0
 	go.mongodb.org/mongo-driver v1.17.3
 	golang.org/x/crypto v0.35.0

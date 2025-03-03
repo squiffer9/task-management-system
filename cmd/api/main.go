@@ -2,16 +2,16 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"task-management-system/config"
+	httpServer "task-management-system/internal/delivery/http"
 	"task-management-system/internal/infrastructure/logger"
 	"task-management-system/internal/infrastructure/mongodb"
+	"task-management-system/internal/usecase"
 )
 
 func main() {
@@ -54,37 +54,35 @@ func main() {
 
 	logger.InfoF("Repositories initialized successfully")
 
-	// TODO: Initialize usecases
-	// TODO: Initialize HTTP handlers and routes
+	// Initialize usecases
+	taskUseCase := usecase.NewTaskUseCase(taskRepo, userRepo)
+	userUseCase := usecase.NewUserUseCase(userRepo)
+	authUseCase := usecase.NewAuthUseCase(userRepo, cfg.Auth.JWT.Secret, cfg.Auth.JWT.Expiry)
+
+	logger.InfoF("Use cases initialized successfully")
 
 	// Create HTTP server
-	server := &http.Server{
-		Addr: fmt.Sprintf(":%d", cfg.Server.HTTP.Port),
-		// TODO: Add handler
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
+	server := httpServer.NewServer(cfg, taskUseCase, userUseCase, authUseCase)
 
 	// Start HTTP server in a goroutine
 	go func() {
-		logger.InfoF("Starting HTTP server on port %d", cfg.Server.HTTP.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server.Start(); err != nil {
 			logger.FatalF("Failed to start HTTP server: %v", err)
 		}
 	}()
 
-	// Handle graceful shutdown
+	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-quit
-	logger.InfoF("Shutting down HTTP server... (Signal: %v)", sig)
+	logger.InfoF("Shutting down server... (Signal: %v)", sig)
 
-	// Create a deadline for graceful shutdown
+	// Create a deadline for server shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Gracefully shutdown the server
-	if err := server.Shutdown(ctx); err != nil {
+	// Shutdown the server
+	if err := server.Stop(ctx); err != nil {
 		logger.ErrorF("Server shutdown error: %v", err)
 	}
 
