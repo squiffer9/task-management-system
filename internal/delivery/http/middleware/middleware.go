@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"task-management-system/internal/logger"
 	"task-management-system/internal/usecase"
 )
@@ -54,7 +56,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 }
 
 // Auth is a middleware that authenticates requests
-func Auth(authUseCase *usecase.AuthUseCase) Middleware {
+func Auth(authUseCase *usecase.AuthUseCase) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Get Authorization header

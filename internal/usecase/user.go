@@ -155,7 +155,7 @@ func (uc *UserUseCase) UpdateUser(input *UpdateUserInput) (*domain.User, error) 
 
 		// Check if the new email is already used by another user
 		existingUser, err := uc.userRepo.FindByEmail(input.Email)
-		if err == nil && existingUser != nil && !existingUser.ID.Equal(userID) {
+		if err == nil && existingUser != nil && existingUser.ID != userID {
 			return nil, errors.New("email already used by another user")
 		}
 

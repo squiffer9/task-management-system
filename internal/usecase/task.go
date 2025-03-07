@@ -133,7 +133,7 @@ func (uc *TaskUseCase) UpdateTask(input *UpdateTaskInput) (*domain.Task, error) 
 
 	// Verify that updater exists and is authorized
 	// (either the creator or assigned to the task)
-	if !task.CreatedBy.Equal(updaterID) && !task.AssignedTo.Equal(updaterID) {
+	if task.CreatedBy != updaterID && task.AssignedTo != updaterID {
 		return nil, domain.ErrUnauthorized
 	}
 
@@ -192,7 +192,7 @@ func (uc *TaskUseCase) DeleteTask(id string, userID string) error {
 	}
 
 	// Only the creator can delete a task
-	if !task.CreatedBy.Equal(userObjID) {
+	if task.CreatedBy != userObjID {
 		return domain.ErrUnauthorized
 	}
 
@@ -232,7 +232,7 @@ func (uc *TaskUseCase) AssignTask(input *AssignTaskInput) (*domain.Task, error) 
 	}
 
 	// Only the creator can assign a task
-	if !task.CreatedBy.Equal(assignerID) {
+	if task.CreatedBy != assignerID {
 		return nil, domain.ErrUnauthorized
 	}
 

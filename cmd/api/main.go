@@ -17,9 +17,9 @@ import (
 func main() {
 	// Initialize logger
 	if os.Getenv("APP_ENV") == "development" {
-		logger.SetDefaultLevel(logger.Debug)
+		logger.SetDefaultLevel(logger.LevelDebug)
 	} else {
-		logger.SetDefaultLevel(logger.Info)
+		logger.SetDefaultLevel(logger.LevelInfo)
 	}
 
 	logger.InfoF("Starting task management API server")
