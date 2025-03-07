@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package task;
+
+option go_package = "task-management-system/api/proto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service TaskService {
+  // Task management operations
+  rpc CreateTask(CreateTaskRequest) returns (TaskResponse);
+  rpc GetTask(GetTaskRequest) returns (TaskResponse);
+  rpc UpdateTask(UpdateTaskRequest) returns (TaskResponse);
+  rpc DeleteTask(DeleteTaskRequest) returns (google.protobuf.Empty);
+  rpc ListTasks(ListTasksRequest) returns (ListTasksResponse);
+  rpc AssignTask(AssignTaskRequest) returns (TaskResponse);
+  rpc GetUserTasks(GetUserTasksRequest) returns (ListTasksResponse);
+}
+
+// Task status enum
+enum TaskStatus {
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_PENDING = 1;
+  TASK_STATUS_IN_PROGRESS = 2;
+  TASK_STATUS_COMPLETED = 3;
+}
+
+// Request message for creating a task
+message CreateTaskRequest {
+  string title = 1;
+  string description = 2;
+  int32 priority = 3;
+  google.protobuf.Timestamp due_date = 4;
+  string created_by = 5; // User ID
+}
+
+// Request message for getting a task
+message GetTaskRequest {
+  string id = 1;
+}
+
+// Request message for updating a task
+message UpdateTaskRequest {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  TaskStatus status = 4;
+  int32 priority = 5;
+  google.protobuf.Timestamp due_date = 6;
+  string updated_by = 7; // User ID
+}
+
+// Request message for deleting a task
+message DeleteTaskRequest {
+  string id = 1;
+  string user_id = 2; // User ID of the user deleting the task
+}
+
+// Request message for listing tasks
+message ListTasksRequest {
+  TaskStatus status = 1;
+}
+
+// Request message for assigning a task
+message AssignTaskRequest {
+  string task_id = 1;
+  string assignee_id = 2;
+  string assigned_by = 3;
+}
+
+// Request message for getting user tasks
+message GetUserTasksRequest {
+  string user_id = 1;
+}
+
+// Response message for a task
+message TaskResponse {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  TaskStatus status = 4;
+  int32 priority = 5;
+  google.protobuf.Timestamp due_date = 6;
+  string assigned_to = 7;
+  string created_by = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+// Response message for listing tasks
+message ListTasksResponse {
+  repeated TaskResponse tasks = 1;
+}
+
+// User service for authentication and user management
+service UserService {
+  rpc GetUser(GetUserRequest) returns (UserResponse);
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+// Request message for getting a user
+message GetUserRequest {
+  string id = 1;
+}
+
+// Request message for validating a token
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+// Response message for validating a token
+message ValidateTokenResponse {
+  string user_id = 1;
+  string username = 2;
+  bool valid = 3;
+}
+
+// Response message for a user
+message UserResponse {
+  string id = 1;
+  string username = 2;
+  string email = 3;
+  string first_name = 4;
+  string last_name = 5;
+  google.protobuf.Timestamp created_at = 6;
+}

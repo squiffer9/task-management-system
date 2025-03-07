@@ -1,24 +1,23 @@
 package main
 
 import (
-	"fmt"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"google.golang.org/grpc"
 	"task-management-system/config"
+	grpcServer "task-management-system/internal/delivery/grpc"
 	"task-management-system/internal/infrastructure/mongodb"
 	"task-management-system/internal/logger"
+	"task-management-system/internal/usecase"
 )
 
 func main() {
 	// Initialize logger
 	if os.Getenv("APP_ENV") == "development" {
-		logger.SetDefaultLevel(logger.Debug)
+		logger.SetDefaultLevel(logger.LevelDebug)
 	} else {
-		logger.SetDefaultLevel(logger.Info)
+		logger.SetDefaultLevel(logger.LevelInfo)
 	}
 
 	logger.InfoF("Starting task management gRPC server")
@@ -53,24 +52,22 @@ func main() {
 
 	logger.InfoF("Repositories initialized successfully")
 
-	// TODO: Initialize usecases
-	// TODO: Initialize gRPC services
+	// Initialize usecases
+	taskUseCase := usecase.NewTaskUseCase(taskRepo, userRepo)
+	userUseCase := usecase.NewUserUseCase(userRepo)
+	authUseCase := usecase.NewAuthUseCase(userRepo, cfg.Auth.JWT.Secret, cfg.Auth.JWT.Expiry)
+
+	logger.InfoF("Use cases initialized successfully")
 
 	// Create gRPC server
-	grpcServer := grpc.NewServer()
-
-	// TODO: Register gRPC services
-
-	// Start gRPC server
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.Server.GRPC.Port))
+	server, err := grpcServer.NewServer(cfg, taskUseCase, userUseCase, authUseCase)
 	if err != nil {
-		logger.FatalF("Failed to listen: %v", err)
+		logger.FatalF("Failed to create gRPC server: %v", err)
 	}
 
 	// Start gRPC server in a goroutine
 	go func() {
-		logger.InfoF("Starting gRPC server on port %d", cfg.Server.GRPC.Port)
-		if err := grpcServer.Serve(lis); err != nil {
+		if err := server.Start(); err != nil {
 			logger.FatalF("Failed to start gRPC server: %v", err)
 		}
 	}()
@@ -81,7 +78,7 @@ func main() {
 	sig := <-quit
 	logger.InfoF("Shutting down gRPC server... (Signal: %v)", sig)
 
-	// Gracefully stop the gRPC server
-	grpcServer.GracefulStop()
+	// Gracefully stop the server
+	server.Stop()
 	logger.InfoF("Server gracefully stopped")
 }
