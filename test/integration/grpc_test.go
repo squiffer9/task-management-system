@@ -11,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
@@ -123,14 +125,14 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 }
 
 func createTestUser(userRepo domain.UserRepository) {
-	// Hash password using a function from the usecase package
-	hashedPassword, _ := usecase.HashPassword("password123")
+	// Hash password manually instead of using the usecase function
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 
 	user := &domain.User{
 		ID:        testUserID(),
 		Username:  "testuser",
 		Email:     "test@example.com",
-		Password:  hashedPassword,
+		Password:  string(hashedPassword),
 		FirstName: "Test",
 		LastName:  "User",
 		CreatedAt: time.Now(),

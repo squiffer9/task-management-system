@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"task-management-system/api/proto"
-	"task-management-system/internal/logger"
 )
 
 // Client represents a gRPC client
