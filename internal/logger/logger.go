@@ -12,24 +12,24 @@ import (
 type Level int
 
 const (
-	// Debug level for verbose messages useful for debugging
-	Debug Level = iota
-	// Info level for general operational information
-	Info
-	// Warn level for non-critical issues that might need attention
-	Warn
-	// Error level for errors that should be addressed
-	Error
-	// Fatal level for critical errors that lead to termination
-	Fatal
+	// LevelDebug level for verbose messages useful for debugging
+	LevelDebug Level = iota
+	// LevelInfo level for general operational information
+	LevelInfo
+	// LevelWarn level for non-critical issues that might need attention
+	LevelWarn
+	// LevelError level for errors that should be addressed
+	LevelError
+	// LevelFatal level for critical errors that lead to termination
+	LevelFatal
 )
 
 var levelNames = map[Level]string{
-	Debug: "DEBUG",
-	Info:  "INFO",
-	Warn:  "WARN",
-	Error: "ERROR",
-	Fatal: "FATAL",
+	LevelDebug: "DEBUG",
+	LevelInfo:  "INFO",
+	LevelWarn:  "WARN",
+	LevelError: "ERROR",
+	LevelFatal: "FATAL",
 }
 
 // Logger represents a simple structured logger
@@ -93,34 +93,34 @@ func (l *Logger) log(level Level, msg string, fields map[string]interface{}) {
 	fmt.Fprintln(l.writer, logEntry)
 
 	// For fatal logs, terminate the program
-	if level == Fatal {
+	if level == LevelFatal {
 		os.Exit(1)
 	}
 }
 
 // Debug logs a message at debug level
 func (l *Logger) Debug(msg string, fields map[string]interface{}) {
-	l.log(Debug, msg, fields)
+	l.log(LevelDebug, msg, fields)
 }
 
 // Info logs a message at info level
 func (l *Logger) Info(msg string, fields map[string]interface{}) {
-	l.log(Info, msg, fields)
+	l.log(LevelInfo, msg, fields)
 }
 
 // Warn logs a message at warn level
 func (l *Logger) Warn(msg string, fields map[string]interface{}) {
-	l.log(Warn, msg, fields)
+	l.log(LevelWarn, msg, fields)
 }
 
 // Error logs a message at error level
 func (l *Logger) Error(msg string, fields map[string]interface{}) {
-	l.log(Error, msg, fields)
+	l.log(LevelError, msg, fields)
 }
 
 // Fatal logs a message at fatal level and terminates the program
 func (l *Logger) Fatal(msg string, fields map[string]interface{}) {
-	l.log(Fatal, msg, fields)
+	l.log(LevelFatal, msg, fields)
 }
 
 // DebugF logs a debug message with formatted string
@@ -154,7 +154,7 @@ func (l *Logger) FatalF(format string, args ...interface{}) {
 }
 
 // Global default logger instance
-var defaultLogger = New(Info)
+var defaultLogger = New(LevelInfo)
 
 // SetDefaultLevel sets the log level for the default logger
 func SetDefaultLevel(level Level) {

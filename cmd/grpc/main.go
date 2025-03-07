@@ -9,8 +9,8 @@ import (
 
 	"google.golang.org/grpc"
 	"task-management-system/config"
-	"task-management-system/internal/infrastructure/logger"
 	"task-management-system/internal/infrastructure/mongodb"
+	"task-management-system/internal/logger"
 )
 
 func main() {

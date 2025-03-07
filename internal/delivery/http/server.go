@@ -8,7 +8,7 @@ import (
 
 	"task-management-system/config"
 	"task-management-system/internal/delivery/http/routes"
-	"task-management-system/internal/infrastructure/logger"
+	"task-management-system/internal/logger"
 	"task-management-system/internal/usecase"
 )
 

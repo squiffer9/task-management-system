@@ -9,8 +9,8 @@ import (
 
 	"task-management-system/config"
 	httpServer "task-management-system/internal/delivery/http"
-	"task-management-system/internal/infrastructure/logger"
 	"task-management-system/internal/infrastructure/mongodb"
+	"task-management-system/internal/logger"
 	"task-management-system/internal/usecase"
 )
 

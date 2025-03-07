@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"task-management-system/internal/infrastructure/logger"
+	"task-management-system/internal/logger"
 	"task-management-system/internal/usecase"
 )
 
