@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	httpUtils "task-management-system/internal/delivery/http/utils"
 	"task-management-system/internal/domain"
 	"task-management-system/internal/usecase"
 )
@@ -21,7 +22,30 @@ func NewUserHandler(userUseCase *usecase.UserUseCase) *UserHandler {
 	}
 }
 
-// GetUser handles GET /users/{id} requests
+// UserResponse represents the response for user data
+type UserResponse struct {
+	ID        string `json:"id" example:"60f1a7c9e113d70001234567"`
+	Username  string `json:"username" example:"johndoe"`
+	Email     string `json:"email" example:"john.doe@example.com"`
+	FirstName string `json:"first_name,omitempty" example:"John"`
+	LastName  string `json:"last_name,omitempty" example:"Doe"`
+	CreatedAt string `json:"created_at" example:"Sat, 01 Mar 2025 12:00:00 GMT"`
+	UpdatedAt string `json:"updated_at" example:"Sat, 08 Mar 2025 15:00:00 GMT"`
+}
+
+// GetUser godoc
+// @Summary Get user by ID
+// @Description Get a user by their ID
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param id path string true "User ID" example:"60f1a7c9e113d70001234567"
+// @Success 200 {object} ResponseWrapper{data=UserResponse} "User retrieved successfully"
+// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Unauthorized"
+// @Failure 404 {object} ResponseWrapper{error=ErrorInfo} "User not found"
+// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Router /users/{id} [get]
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from URL
 	vars := mux.Vars(r)
@@ -33,24 +57,14 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		// Handle different error types
 		switch err {
 		case domain.ErrNotFound:
-			http.Error(w, "User not found", http.StatusNotFound)
+			httpUtils.RespondWithError(w, http.StatusNotFound, "User not found")
 		default:
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			httpUtils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 		}
 		return
 	}
 
 	// Create a response struct to avoid sending password
-	type UserResponse struct {
-		ID        string `json:"id"`
-		Username  string `json:"username"`
-		Email     string `json:"email"`
-		FirstName string `json:"first_name,omitempty"`
-		LastName  string `json:"last_name,omitempty"`
-		CreatedAt string `json:"created_at"`
-		UpdatedAt string `json:"updated_at"`
-	}
-
 	resp := UserResponse{
 		ID:        user.ID.Hex(),
 		Username:  user.Username,
@@ -62,19 +76,34 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return user
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	httpUtils.RespondWithJSON(w, http.StatusOK, resp)
 }
 
 // UpdateUserRequest represents the request body for updating a user
 type UpdateUserRequest struct {
-	Email     string `json:"email,omitempty"`
-	FirstName string `json:"first_name,omitempty"`
-	LastName  string `json:"last_name,omitempty"`
-	Password  string `json:"password,omitempty"`
+	Email     string `json:"email,omitempty" example:"new.email@example.com" format:"email"`
+	FirstName string `json:"first_name,omitempty" example:"John"`
+	LastName  string `json:"last_name,omitempty" example:"Doe"`
+	Password  string `json:"password,omitempty" example:"newsecurepassword123" minLength:"6"`
 }
 
-// UpdateUser handles PUT /users/{id} requests
+// UpdateUser godoc
+// @Summary Update user
+// @Description Update a user's profile
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param id path string true "User ID" example:"60f1a7c9e113d70001234567"
+// @Param user body UpdateUserRequest true "Updated user information"
+// @Success 200 {object} ResponseWrapper{data=UserResponse} "User updated successfully"
+// @Failure 400 {object} ResponseWrapper{error=ErrorInfo} "Invalid input"
+// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Unauthorized"
+// @Failure 403 {object} ResponseWrapper{error=ErrorInfo} "Forbidden - cannot update another user's profile"
+// @Failure 404 {object} ResponseWrapper{error=ErrorInfo} "User not found"
+// @Failure 409 {object} ResponseWrapper{error=ErrorInfo} "Email already in use"
+// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Router /users/{id} [put]
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from URL
 	vars := mux.Vars(r)
@@ -83,20 +112,20 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Get authenticated user ID from context
 	authenticatedUserID, ok := r.Context().Value("userID").(string)
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		httpUtils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	// Check if the authenticated user is updating their own profile
 	if authenticatedUserID != userID {
-		http.Error(w, "Forbidden", http.StatusForbidden)
+		httpUtils.RespondWithError(w, http.StatusForbidden, "You can only update your own profile")
 		return
 	}
 
 	// Parse request body
 	var req UpdateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		httpUtils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -113,28 +142,18 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		// Handle different error types
 		switch err {
 		case domain.ErrNotFound:
-			http.Error(w, "User not found", http.StatusNotFound)
+			httpUtils.RespondWithError(w, http.StatusNotFound, "User not found")
 		case domain.ErrInvalidInput:
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			httpUtils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		case domain.ErrDuplicateKey:
-			http.Error(w, "Email already in use", http.StatusConflict)
+			httpUtils.RespondWithError(w, http.StatusConflict, "Email already in use")
 		default:
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			httpUtils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 		}
 		return
 	}
 
 	// Create a response struct to avoid sending password
-	type UserResponse struct {
-		ID        string `json:"id"`
-		Username  string `json:"username"`
-		Email     string `json:"email"`
-		FirstName string `json:"first_name,omitempty"`
-		LastName  string `json:"last_name,omitempty"`
-		CreatedAt string `json:"created_at"`
-		UpdatedAt string `json:"updated_at"`
-	}
-
 	resp := UserResponse{
 		ID:        user.ID.Hex(),
 		Username:  user.Username,
@@ -146,16 +165,26 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return updated user
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	httpUtils.RespondWithJSON(w, http.StatusOK, resp)
 }
 
-// GetProfile handles GET /me requests
+// GetProfile godoc
+// @Summary Get current user profile
+// @Description Get the profile of the currently authenticated user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Success 200 {object} ResponseWrapper{data=UserResponse} "User profile retrieved successfully"
+// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Unauthorized"
+// @Failure 404 {object} ResponseWrapper{error=ErrorInfo} "User not found"
+// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Router /me [get]
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	// Get authenticated user ID from context
 	userID, ok := r.Context().Value("userID").(string)
 	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		httpUtils.RespondWithError(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -165,24 +194,14 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		// Handle different error types
 		switch err {
 		case domain.ErrNotFound:
-			http.Error(w, "User not found", http.StatusNotFound)
+			httpUtils.RespondWithError(w, http.StatusNotFound, "User not found")
 		default:
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			httpUtils.RespondWithError(w, http.StatusInternalServerError, "Internal server error")
 		}
 		return
 	}
 
 	// Create a response struct to avoid sending password
-	type UserResponse struct {
-		ID        string `json:"id"`
-		Username  string `json:"username"`
-		Email     string `json:"email"`
-		FirstName string `json:"first_name,omitempty"`
-		LastName  string `json:"last_name,omitempty"`
-		CreatedAt string `json:"created_at"`
-		UpdatedAt string `json:"updated_at"`
-	}
-
 	resp := UserResponse{
 		ID:        user.ID.Hex(),
 		Username:  user.Username,
@@ -194,6 +213,5 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return user
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	httpUtils.RespondWithJSON(w, http.StatusOK, resp)
 }

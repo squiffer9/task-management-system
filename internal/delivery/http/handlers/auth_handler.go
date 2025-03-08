@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	httpUtils "task-management-system/internal/delivery/http/utils"
 	"task-management-system/internal/usecase"
 )
 
@@ -23,27 +24,37 @@ func NewAuthHandler(authUseCase *usecase.AuthUseCase, userUseCase *usecase.UserU
 
 // RegisterRequest represents the request body for user registration
 type RegisterRequest struct {
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	Username  string `json:"username" example:"johndoe" minLength:"3"`
+	Email     string `json:"email" example:"john.doe@example.com" format:"email"`
+	Password  string `json:"password" example:"securepassword123" minLength:"6"`
+	FirstName string `json:"first_name,omitempty" example:"John"`
+	LastName  string `json:"last_name,omitempty" example:"Doe"`
 }
 
 // RegisterResponse represents the response for user registration
 type RegisterResponse struct {
-	ID        string `json:"id"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	FirstName string `json:"first_name,omitempty"`
-	LastName  string `json:"last_name,omitempty"`
+	ID        string `json:"id" example:"60f1a7c9e113d70001234567"`
+	Username  string `json:"username" example:"johndoe"`
+	Email     string `json:"email" example:"john.doe@example.com"`
+	FirstName string `json:"first_name,omitempty" example:"John"`
+	LastName  string `json:"last_name,omitempty" example:"Doe"`
 }
 
-// Register handles POST /auth/register requests
+// Register godoc
+// @Summary Register a new user
+// @Description Create a new user account
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param registration body RegisterRequest true "User registration information"
+// @Success 201 {object} ResponseWrapper{data=RegisterResponse} "User registered successfully"
+// @Failure 400 {object} ResponseWrapper{error=ErrorInfo} "Invalid input or duplicate username/email"
+// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		httpUtils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -58,7 +69,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// Handle error
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		httpUtils.RespondWithError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -72,30 +83,38 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return created user
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
+	httpUtils.RespondWithJSON(w, http.StatusCreated, resp)
 }
 
 // LoginRequest represents the request body for user login
 type LoginRequest struct {
-	Login    string `json:"login"` // username or email
-	Password string `json:"password"`
+	Login    string `json:"login" example:"johndoe" description:"Username or email"`
+	Password string `json:"password" example:"securepassword123"`
 }
 
 // LoginResponse represents the response for user login
 type LoginResponse struct {
-	AccessToken string `json:"access_token"`
-	ExpiresAt   string `json:"expires_at"`
-	UserID      string `json:"user_id"`
-	Username    string `json:"username"`
+	AccessToken string `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	ExpiresAt   string `json:"expires_at" example:"Sat, 08 Mar 2025 15:00:00 GMT"`
+	UserID      string `json:"user_id" example:"60f1a7c9e113d70001234567"`
+	Username    string `json:"username" example:"johndoe"`
 }
 
-// Login handles POST /auth/login requests
+// Login godoc
+// @Summary Authenticate user
+// @Description Authenticate a user and get a JWT token
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param credentials body LoginRequest true "User login credentials"
+// @Success 200 {object} ResponseWrapper{data=LoginResponse} "User authenticated successfully"
+// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Invalid credentials"
+// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		httpUtils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
@@ -106,7 +125,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		http.Error(w, "Invalid login credentials", http.StatusUnauthorized)
+		httpUtils.RespondWithError(w, http.StatusUnauthorized, "Invalid login credentials")
 		return
 	}
 
@@ -119,27 +138,36 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return token
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	httpUtils.RespondWithJSON(w, http.StatusOK, resp)
 }
 
 // RefreshTokenRequest represents the request body for refreshing token
 type RefreshTokenRequest struct {
-	Token string `json:"token"`
+	Token string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 }
 
-// RefreshToken handles POST /auth/refresh-token requests
+// RefreshToken godoc
+// @Summary Refresh JWT token
+// @Description Get a new JWT token using a valid token
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @Param token body RefreshTokenRequest true "Current valid token"
+// @Success 200 {object} ResponseWrapper{data=LoginResponse} "Token refreshed successfully"
+// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Invalid or expired token"
+// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Router /auth/refresh-token [post]
 func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req RefreshTokenRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		httpUtils.RespondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
 	// Refresh token
 	result, err := h.authUseCase.RefreshToken(req.Token)
 	if err != nil {
-		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		httpUtils.RespondWithError(w, http.StatusUnauthorized, "Invalid token")
 		return
 	}
 
@@ -152,6 +180,5 @@ func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return new token
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	httpUtils.RespondWithJSON(w, http.StatusOK, resp)
 }

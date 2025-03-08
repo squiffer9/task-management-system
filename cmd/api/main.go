@@ -19,14 +19,21 @@ import (
 )
 
 // @title Task Management System API
-// @version 0.1.0
-// @description API for task management system built with Go and MongoDB.
+// @version 1.0.0
+// @description RESTful API for managing tasks, with MongoDB backend and JWT authentication
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 // @BasePath /api/v1
+// @contact.name API Support
+// @contact.email support@example.com
+// @host localhost:8080
+// @schemes http https
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+// @externalDocs.description Find more info here
+// @externalDocs.url https://github.com/yourusername/task-management-system
 func main() {
 	// Initialize logger
 	if os.Getenv("APP_ENV") == "development" {
@@ -83,8 +90,9 @@ func main() {
 		router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 			httpSwagger.URL("/swagger/doc.json"), // URL to swagger JSON doc
 			httpSwagger.DeepLinking(true),
-			httpSwagger.DocExpansion("none"),
+			httpSwagger.DocExpansion("list"),
 			httpSwagger.DomID("swagger-ui"),
+			httpSwagger.PersistAuthorization(true),
 		))
 		logger.InfoF("Swagger UI initialized at /swagger/")
 	} else {
