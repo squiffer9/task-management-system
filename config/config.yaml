@@ -17,5 +17,5 @@ database:
 
 auth:
   jwt:
-    secret: "your-secret-key"
+    secret: "test-secret-key"
     expiry: 24 # hours
