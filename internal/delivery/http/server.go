@@ -15,6 +15,7 @@ import (
 // Server represents HTTP server
 type Server struct {
 	server *http.Server
+	router http.Handler
 	cfg    *config.Config
 }
 
@@ -39,8 +40,14 @@ func NewServer(
 
 	return &Server{
 		server: server,
+		router: router,
 		cfg:    cfg,
 	}
+}
+
+// GetRouter returns the router
+func (s *Server) GetRouter() http.Handler {
+	return s.router
 }
 
 // Start starts the HTTP server

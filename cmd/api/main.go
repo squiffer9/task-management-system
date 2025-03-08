@@ -7,6 +7,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
+
 	"task-management-system/config"
 	httpServer "task-management-system/internal/delivery/http"
 	"task-management-system/internal/infrastructure/mongodb"
@@ -14,6 +17,15 @@ import (
 	"task-management-system/internal/usecase"
 )
 
+// @title Task Management System API
+// @version 0.1.0
+// @description API for task management system built with Go and MongoDB.
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	// Initialize logger
 	if os.Getenv("APP_ENV") == "development" {
@@ -63,6 +75,19 @@ func main() {
 
 	// Create HTTP server
 	server := httpServer.NewServer(cfg, taskUseCase, userUseCase, authUseCase)
+
+	// Add Swagger handler to the router
+	// Note: We need to access the router from the server, which requires a modification to the server structure
+	if router, ok := server.GetRouter().(*mux.Router); ok {
+		// Serve Swagger UI
+		router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
+			httpSwagger.URL("/swagger/doc.json"), // The URL pointing to API definition
+			httpSwagger.DeepLinking(true),
+			httpSwagger.DocExpansion("none"),
+			httpSwagger.DomID("swagger-ui"),
+		))
+		logger.InfoF("Swagger UI initialized at /swagger/")
+	}
 
 	// Start HTTP server in a goroutine
 	go func() {
