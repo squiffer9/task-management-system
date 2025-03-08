@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -84,6 +85,11 @@ func main() {
 
 	// Add Swagger handler directly to the mux router
 	if router, ok := server.GetRouter().(*mux.Router); ok {
+		// Create a handler to serve the API specification file directly from the file system
+		router.HandleFunc("/swagger/doc.json", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, "api/swagger/doc.json")
+		})
+
 		// Define Swagger UI route
 		router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
 			httpSwagger.URL("/swagger/doc.json"), // URL to swagger JSON doc
@@ -92,7 +98,7 @@ func main() {
 			httpSwagger.DomID("swagger-ui"),
 			httpSwagger.PersistAuthorization(true),
 		))
-		logger.InfoF("Swagger UI initialized at /swagger/")
+		logger.InfoF("Swagger UI initialized at /swagger/, using spec from /swagger/doc.json")
 	} else {
 		logger.WarnF("Could not initialize Swagger UI - router is not of type *mux.Router")
 	}
