@@ -22,6 +22,18 @@ func NewTaskHandler(taskUseCase *usecase.TaskUseCase) *TaskHandler {
 	}
 }
 
+// CreateTask godoc
+// @Summary Create a new task
+// @Description Create a new task with the provided information
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer {token}"
+// @Param task body CreateTaskRequest true "Task information"
+// @Success 201 {object} domain.Task
+// @Failure 400 {object} Error
+// @Failure 401 {object} Error
+// @Router /tasks [post]
 // CreateTaskRequest represents the request body for creating a task
 type CreateTaskRequest struct {
 	Title       string    `json:"title"`

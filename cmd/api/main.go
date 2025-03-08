@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
+	_ "task-management-system/api/swagger"
 
 	"task-management-system/config"
 	httpServer "task-management-system/internal/delivery/http"
@@ -76,17 +77,18 @@ func main() {
 	// Create HTTP server
 	server := httpServer.NewServer(cfg, taskUseCase, userUseCase, authUseCase)
 
-	// Add Swagger handler to the router
-	// Note: We need to access the router from the server, which requires a modification to the server structure
+	// Add Swagger handler directly to the mux router
 	if router, ok := server.GetRouter().(*mux.Router); ok {
-		// Serve Swagger UI
+		// Define Swagger UI route
 		router.PathPrefix("/swagger/").Handler(httpSwagger.Handler(
-			httpSwagger.URL("/swagger/doc.json"), // The URL pointing to API definition
+			httpSwagger.URL("/swagger/doc.json"), // URL to swagger JSON doc
 			httpSwagger.DeepLinking(true),
 			httpSwagger.DocExpansion("none"),
 			httpSwagger.DomID("swagger-ui"),
 		))
 		logger.InfoF("Swagger UI initialized at /swagger/")
+	} else {
+		logger.WarnF("Could not initialize Swagger UI - router is not of type *mux.Router")
 	}
 
 	// Start HTTP server in a goroutine
