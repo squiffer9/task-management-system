@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "task-management-system/api/swagger"
+	_ "task-management-system/docs"
 
 	"task-management-system/config"
 	httpServer "task-management-system/internal/delivery/http"
@@ -23,7 +23,7 @@ import (
 // @description RESTful API for managing tasks, with MongoDB backend and JWT authentication
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
-// @BasePath /api/v1
+// @basePath /api/v1
 // @contact.name API Support
 // @contact.email support@example.com
 // @host localhost:8080
@@ -32,8 +32,6 @@ import (
 // @in header
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.
-// @externalDocs.description Find more info here
-// @externalDocs.url https://github.com/yourusername/task-management-system
 func main() {
 	// Initialize logger
 	if os.Getenv("APP_ENV") == "development" {

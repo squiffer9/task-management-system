@@ -41,10 +41,10 @@ type UserResponse struct {
 // @Produce json
 // @Param Authorization header string true "Bearer {token}"
 // @Param id path string true "User ID" example:"60f1a7c9e113d70001234567"
-// @Success 200 {object} ResponseWrapper{data=UserResponse} "User retrieved successfully"
-// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Unauthorized"
-// @Failure 404 {object} ResponseWrapper{error=ErrorInfo} "User not found"
-// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Success 200 {object} httpUtils.ResponseWrapper{data=UserResponse} "User retrieved successfully"
+// @Failure 401 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Unauthorized"
+// @Failure 404 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "User not found"
+// @Failure 500 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Internal server error"
 // @Router /users/{id} [get]
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from URL
@@ -96,13 +96,13 @@ type UpdateUserRequest struct {
 // @Param Authorization header string true "Bearer {token}"
 // @Param id path string true "User ID" example:"60f1a7c9e113d70001234567"
 // @Param user body UpdateUserRequest true "Updated user information"
-// @Success 200 {object} ResponseWrapper{data=UserResponse} "User updated successfully"
-// @Failure 400 {object} ResponseWrapper{error=ErrorInfo} "Invalid input"
-// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Unauthorized"
-// @Failure 403 {object} ResponseWrapper{error=ErrorInfo} "Forbidden - cannot update another user's profile"
-// @Failure 404 {object} ResponseWrapper{error=ErrorInfo} "User not found"
-// @Failure 409 {object} ResponseWrapper{error=ErrorInfo} "Email already in use"
-// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Success 200 {object} httpUtils.ResponseWrapper{data=UserResponse} "User updated successfully"
+// @Failure 400 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Invalid input"
+// @Failure 401 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Unauthorized"
+// @Failure 403 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Forbidden - cannot update another user's profile"
+// @Failure 404 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "User not found"
+// @Failure 409 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Email already in use"
+// @Failure 500 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Internal server error"
 // @Router /users/{id} [put]
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Get user ID from URL
@@ -175,10 +175,10 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Bearer {token}"
-// @Success 200 {object} ResponseWrapper{data=UserResponse} "User profile retrieved successfully"
-// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Unauthorized"
-// @Failure 404 {object} ResponseWrapper{error=ErrorInfo} "User not found"
-// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Success 200 {object} httpUtils.ResponseWrapper{data=UserResponse} "User profile retrieved successfully"
+// @Failure 401 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Unauthorized"
+// @Failure 404 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "User not found"
+// @Failure 500 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Internal server error"
 // @Router /me [get]
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	// Get authenticated user ID from context

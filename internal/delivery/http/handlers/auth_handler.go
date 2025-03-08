@@ -47,9 +47,9 @@ type RegisterResponse struct {
 // @Accept json
 // @Produce json
 // @Param registration body RegisterRequest true "User registration information"
-// @Success 201 {object} ResponseWrapper{data=RegisterResponse} "User registered successfully"
-// @Failure 400 {object} ResponseWrapper{error=ErrorInfo} "Invalid input or duplicate username/email"
-// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Success 201 {object} httpUtils.ResponseWrapper{data=RegisterResponse} "User registered successfully"
+// @Failure 400 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Invalid input or duplicate username/email"
+// @Failure 500 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Internal server error"
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
@@ -107,9 +107,9 @@ type LoginResponse struct {
 // @Accept json
 // @Produce json
 // @Param credentials body LoginRequest true "User login credentials"
-// @Success 200 {object} ResponseWrapper{data=LoginResponse} "User authenticated successfully"
-// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Invalid credentials"
-// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Success 200 {object} httpUtils.ResponseWrapper{data=LoginResponse} "User authenticated successfully"
+// @Failure 401 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Invalid credentials"
+// @Failure 500 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Internal server error"
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
@@ -153,9 +153,9 @@ type RefreshTokenRequest struct {
 // @Accept json
 // @Produce json
 // @Param token body RefreshTokenRequest true "Current valid token"
-// @Success 200 {object} ResponseWrapper{data=LoginResponse} "Token refreshed successfully"
-// @Failure 401 {object} ResponseWrapper{error=ErrorInfo} "Invalid or expired token"
-// @Failure 500 {object} ResponseWrapper{error=ErrorInfo} "Internal server error"
+// @Success 200 {object} httpUtils.ResponseWrapper{data=LoginResponse} "Token refreshed successfully"
+// @Failure 401 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Invalid or expired token"
+// @Failure 500 {object} httpUtils.ResponseWrapper{error=ErrorInfo} "Internal server error"
 // @Router /auth/refresh-token [post]
 func (h *AuthHandler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	var req RefreshTokenRequest
