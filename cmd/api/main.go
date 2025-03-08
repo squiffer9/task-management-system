@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "task-management-system/docs"
+	_ "task-management-system/api/swagger"
 
 	"task-management-system/config"
 	httpServer "task-management-system/internal/delivery/http"
