@@ -1,0 +1,682 @@
+openapi: 3.0.0
+info:
+  title: Task Management System API
+  description: |
+    API for a task management system built with Go and MongoDB, featuring REST and gRPC endpoints.
+    This system allows for creating, managing, and assigning tasks, as well as user management and authentication.
+  version: 0.1.0
+  contact:
+    email: your-email@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Use a JWT token for authentication. Get the token by logging in.
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Error message explaining what went wrong"
+        code:
+          type: integer
+          format: int32
+          example: 404
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "60f1a7c9e113d70001234567"
+        username:
+          type: string
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        first_name:
+          type: string
+          example: "John"
+        last_name:
+          type: string
+          example: "Doe"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserRegistration:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          example: "johndoe"
+          minLength: 3
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        password:
+          type: string
+          format: password
+          example: "securepassword123"
+          minLength: 6
+        first_name:
+          type: string
+          example: "John"
+        last_name:
+          type: string
+          example: "Doe"
+
+    LoginRequest:
+      type: object
+      required:
+        - login
+        - password
+      properties:
+        login:
+          type: string
+          description: "Username or email"
+          example: "johndoe"
+        password:
+          type: string
+          format: password
+          example: "securepassword123"
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjBmMWE3YzllMTEzZDcwMDAxMjM0NTY3IiwidXNlcm5hbWUiOiJqb2huZG9lIiwiZXhwIjoxNjI2MzYwMDAwLCJpYXQiOjE2MjYzNTYwMDAsIm5iZiI6MTYyNjM1NjAwMH0.STwX6jvzns5KdL9x4W0bxohKNUNw9c3eY9OZ7kf9wp8"
+        expires_at:
+          type: string
+          format: date-time
+        user_id:
+          type: string
+          example: "60f1a7c9e113d70001234567"
+        username:
+          type: string
+          example: "johndoe"
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjBmMWE3YzllMTEzZDcwMDAxMjM0NTY3IiwidXNlcm5hbWUiOiJqb2huZG9lIiwiZXhwIjoxNjI2MzYwMDAwLCJpYXQiOjE2MjYzNTYwMDAsIm5iZiI6MTYyNjM1NjAwMH0.STwX6jvzns5KdL9x4W0bxohKNUNw9c3eY9OZ7kf9wp8"
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "60f1a7c9e113d70001abcdef"
+        title:
+          type: string
+          example: "Implement API documentation"
+        description:
+          type: string
+          example: "Create comprehensive Swagger documentation for the REST API"
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+          example: "pending"
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 3
+        due_date:
+          type: string
+          format: date-time
+        assigned_to:
+          type: string
+          example: "60f1a7c9e113d70001234567"
+        created_by:
+          type: string
+          example: "60f1a7c9e113d70001234567"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: "Implement API documentation"
+        description:
+          type: string
+          example: "Create comprehensive Swagger documentation for the REST API"
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 3
+        due_date:
+          type: string
+          format: date-time
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Updated task title"
+        description:
+          type: string
+          example: "Updated task description"
+        status:
+          type: string
+          enum: [pending, in_progress, completed]
+          example: "in_progress"
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 4
+        due_date:
+          type: string
+          format: date-time
+
+    AssignTaskRequest:
+      type: object
+      required:
+        - assignee_id
+      properties:
+        assignee_id:
+          type: string
+          example: "60f1a7c9e113d7000fedcba9"
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Check if the API is up and running
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is up and running
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Create a new user account
+      operationId: registerUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegistration"
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Username or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/login:
+    post:
+      summary: Authenticate user
+      description: Authenticate a user and get a JWT token
+      operationId: loginUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: User authenticated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/refresh-token:
+    post:
+      summary: Refresh JWT token
+      description: Get a new JWT token using a valid token
+      operationId: refreshToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /me:
+    get:
+      summary: Get current user profile
+      description: Get the profile of the currently authenticated user
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      tags:
+        - Users
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      description: Get a user by their ID
+      operationId: getUser
+      security:
+        - BearerAuth: []
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        "200":
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update user
+      description: Update a user's profile
+      operationId: updateUser
+      security:
+        - BearerAuth: []
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "new.email@example.com"
+                first_name:
+                  type: string
+                  example: "John"
+                last_name:
+                  type: string
+                  example: "Doe"
+                password:
+                  type: string
+                  format: password
+                  example: "newsecurepassword123"
+      responses:
+        "200":
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden - cannot update another user's profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /tasks:
+    get:
+      summary: List tasks
+      description: Get a list of tasks with optional status filter
+      operationId: listTasks
+      security:
+        - BearerAuth: []
+      tags:
+        - Tasks
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, in_progress, completed]
+          description: Filter tasks by status
+      responses:
+        "200":
+          description: Tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+    post:
+      summary: Create task
+      description: Create a new task
+      operationId: createTask
+      security:
+        - BearerAuth: []
+      tags:
+        - Tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskRequest"
+      responses:
+        "201":
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /tasks/{id}:
+    get:
+      summary: Get task by ID
+      description: Get a task by its ID
+      operationId: getTask
+      security:
+        - BearerAuth: []
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task ID
+      responses:
+        "200":
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update task
+      description: Update a task
+      operationId: updateTask
+      security:
+        - BearerAuth: []
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskRequest"
+      responses:
+        "200":
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden - cannot update task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      summary: Delete task
+      description: Delete a task
+      operationId: deleteTask
+      security:
+        - BearerAuth: []
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task ID
+      responses:
+        "204":
+          description: Task deleted successfully
+        "403":
+          description: Forbidden - cannot delete task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /tasks/{id}/assign:
+    post:
+      summary: Assign task
+      description: Assign a task to a user
+      operationId: assignTask
+      security:
+        - BearerAuth: []
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Task ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignTaskRequest"
+      responses:
+        "200":
+          description: Task assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "403":
+          description: Forbidden - cannot assign task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Task or user not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/{id}/tasks:
+    get:
+      summary: Get user's tasks
+      description: Get tasks created by or assigned to a user
+      operationId: getUserTasks
+      security:
+        - BearerAuth: []
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        "200":
+          description: Tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
