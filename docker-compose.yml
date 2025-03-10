@@ -21,6 +21,40 @@ services:
       retries: 5
       start_period: 40s
 
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: task-management-api
+    depends_on:
+      - mongodb
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_ENV=development
+    volumes:
+      - ./config:/app/config
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  grpc:
+    build:
+      context: .
+      dockerfile: docker/grpc.Dockerfile
+    container_name: task-management-grpc
+    depends_on:
+      - mongodb
+    ports:
+      - "50051:50051"
+    environment:
+      - APP_ENV=development
+    volumes:
+      - ./config:/app/config
+    networks:
+      - app-network
+    restart: unless-stopped
+
 networks:
   app-network:
     driver: bridge

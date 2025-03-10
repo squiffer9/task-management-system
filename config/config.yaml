@@ -11,7 +11,7 @@ server:
 
 database:
   mongodb:
-    uri: "mongodb://admin:password@localhost:27017/task_management?authSource=admin"
+    uri: "mongodb://admin:password@mongodb:27017/task_management?authSource=admin"
     name: "task_management"
     timeout: 10 # seconds
 
